@@ -1,0 +1,6 @@
+[submodule "programs/CNN"]
+	path = programs/CNN
+	url = https://github.com/Variable-Precision-GPU/CNN.git
+[submodule "programs/MLP"]
+	path = programs/MLP
+	url = https://github.com/Variable-Precision-GPU/MLP.git
