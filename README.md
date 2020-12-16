@@ -3,10 +3,21 @@
 This program manages the execution of deep learning programs on GPGPU-Sim.
 
 ## Requirements
-1. Compile programs
-2. Apply a global sim config file to all programs
-3. Setup sim environment
-4. Train  
+- [x] Compile programs
+- [x] Apply a global sim config file to all programs
+- [x] Setup sim environment
+- [ ] Train  
 Params: weights, activations, biases, epochs, start epoch, end epoch
-5. Infer  
+- [ ] Infer  
 Params: weights, logs
+- [ ] Clean up intermediate files (_app_cuda_version, _cuobjdump_list_ptx)
+
+## Usage
+### Making DL Program Compatible
+- Program needs to be compilable with `make`
+- Compiled binary needs to have the same name as the program
+### Configuring and Executing Script
+Configure:
+- program directory
+- sim setup path
+- config path
