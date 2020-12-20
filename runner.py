@@ -5,28 +5,27 @@ import os
 
 # Repo configuration (modify this)
 PROGRAM_DIR = "./programs"
-CONFIG_PATH = "./../../config/gpgpusim.config"  # TODO: Fix relative paths
-SIM_SETUP_FILE = "./../gpgpu-sim_distribution/setup_environment"
+CONFIG_DIR = "./config"
+SIM_DIR = "./../gpgpu-sim_distribution"
 
 # Script configuration (modify this)
 BASE_VF32_SIGNIFICAND = 24
 PROGRAM = "MLP"
-EXECUTABLE = "mlp_gpgpu"
+EXECUTABLE = "mlp_cuda"
 STAGE_CONFIG = {
-    "SETUP_SIM": {
-        "RUN": True,
-    },
     "BUILD": {
         "RUN": True,
     },
     "TRAIN": {
-        "RUN": True,
-        "EPOCHS": 1,
-        "WEIGHTS_FILE": "weights.csv",
+        "RUN": False,
+        "START_EPOCH": 250,
+        "INPUT_WEIGHTS_FILE": "weights2.csv",
+        "END_EPOCH": 500,
+        "OUTPUT_WEIGHTS_FILE": "weights3.csv",
     },
     "TEST": {
-        "RUN": False,
-        "WEIGHTS_FILE": "weights.csv",
+        "RUN": True,
+        "WEIGHTS_FILE": "weights4.csv",
         "LOG_FILE": "",
     },
 }
@@ -53,39 +52,60 @@ def metaprint(stage, message):
     print(META_COLOR + string + END_COLOR)
 
 
-def setup_sim():
-    # result = subprocess.run(SIM_SETUP_FILE, stdout=subprocess.PIPE,
-    #                         stderr=subprocess.PIPE, shell=True, check=True)
-    # print(result.stdout.decode(), end="")
-    # print(result.stderr.decode(), end="")
-    os.system(". " + SIM_SETUP_FILE)
-    os.environ["SIM_CONFIG_PATH"] = CONFIG_PATH
-    os.environ["VF_SIGNIFICAND"] = str(BASE_VF32_SIGNIFICAND)
-
-
-def build():
-    result = subprocess.run(
-        ["make"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.join(PROGRAM_DIR, PROGRAM), check=True)
-    print(result.stdout.decode(), end="")
-    print(result.stderr.decode(), end="")
-
-
-def train():
+def run(command, env=os.environ):
     process = subprocess.Popen(
-        ["./" + EXECUTABLE, "-both", "mnist_train.csv", "mnist_test.csv"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.join(PROGRAM_DIR, PROGRAM))
-
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=os.path.join(PROGRAM_DIR, PROGRAM),
+        shell=True,
+        executable='/bin/bash',
+        env=env)
     result = stream(process)
     if result != 0:
+        print("Error: return code {}".format(result))
         exit(result)
 
 
+def run_with_sim_setup(command):
+    env = os.environ.copy()
+    # set path to gpgpusim.config
+    env["SIM_CONFIG_PATH"] = os.path.abspath(
+        os.path.join(CONFIG_DIR, "gpgpusim.config"))
+    # set base precision of VF32 type
+    env["VF_SIGNIFICAND"] = str(BASE_VF32_SIGNIFICAND)
+    # source sim setup file
+    setup_file = os.path.abspath(os.path.join(SIM_DIR, "setup_environment"))
+    command = ". {}; {};".format(setup_file, command)
+    run(command, env)
+
+
+def build():
+    run("make")
+
+
+# TODO: Implement incremental training
+def train():
+    config = STAGE_CONFIG["TRAIN"]
+    if config["START_EPOCH"] <= 1:
+        run_with_sim_setup("./{} -train {} {}".format(EXECUTABLE,
+                                                      config["END_EPOCH"],
+                                                      config["OUTPUT_WEIGHTS_FILE"]))
+    else:
+        run_with_sim_setup("./{} -train-increment {} {} {} {}".format(EXECUTABLE,
+                                                                      config["START_EPOCH"],
+                                                                      config["END_EPOCH"],
+                                                                      config["INPUT_WEIGHTS_FILE"],
+                                                                      config["OUTPUT_WEIGHTS_FILE"]))
+
+
 def test():
-    pass
+    run_with_sim_setup("./{} -test {}".format(EXECUTABLE,
+                                              STAGE_CONFIG["TEST"]["WEIGHTS_FILE"]))
 
 
 if __name__ == "__main__":
     STAGE_FUNC = OrderedDict([
-        ("SETUP_SIM", setup_sim),
         ("BUILD", build),
         ("TRAIN", train),
         ("TEST", test)
