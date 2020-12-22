@@ -10,7 +10,7 @@ This program manages the execution of deep learning programs on GPGPU-Sim.
 Params: weights, epochs, start epoch, end epoch
 - [x] Infer  
 Params: weights, logs (not implemented yet)
-- [ ] Clean up intermediate files (_app_cuda_version, _cuobjdump_list_ptx)
+- [x] Clean up intermediate files (_app_cuda_version, _cuobjdump_list_ptx)
 
 ## Usage
 ### Making DL Program Compatible

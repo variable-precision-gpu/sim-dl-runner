@@ -28,6 +28,9 @@ STAGE_CONFIG = {
         "WEIGHTS_FILE": "weights4.csv",
         "LOG_FILE": "",
     },
+    "CLEANUP": {
+        "RUN": True,
+    },
 }
 
 # Program constants (do not modify)
@@ -103,12 +106,16 @@ def test():
     run_with_sim_setup("./{} -test {}".format(EXECUTABLE,
                                               STAGE_CONFIG["TEST"]["WEIGHTS_FILE"]))
 
+def cleanup():
+    run("rm -f _cuobjdump_list_ptx_* _app_cuda_version_*")
+
 
 if __name__ == "__main__":
     STAGE_FUNC = OrderedDict([
         ("BUILD", build),
         ("TRAIN", train),
-        ("TEST", test)
+        ("TEST", test),
+        ("CLEANUP", cleanup),
     ])
     assert(STAGE_FUNC.keys() == STAGE_CONFIG.keys())
 
