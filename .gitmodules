@@ -4,3 +4,6 @@
 [submodule "programs/MLP"]
 	path = programs/MLP
 	url = https://github.com/Variable-Precision-GPU/MLP.git
+[submodule "programs/MLP2"]
+	path = programs/MLP2
+	url = https://github.com/Variable-Precision-GPU/MLP2.git
