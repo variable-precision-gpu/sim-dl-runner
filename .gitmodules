@@ -7,3 +7,6 @@
 [submodule "programs/MLP2"]
 	path = programs/MLP2
 	url = https://github.com/Variable-Precision-GPU/MLP2.git
+[submodule "programs/CNN2"]
+	path = programs/CNN2
+	url = https://github.com/Variable-Precision-GPU/CNN2.git
