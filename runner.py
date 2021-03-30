@@ -9,9 +9,13 @@ CONFIG_DIR = "./config"
 SIM_DIR = "./../gpgpu-sim_distribution"
 
 # Script configuration (modify this)
-BASE_VF32_SIGNIFICAND = 24
-PROGRAM = "MLP"
-EXECUTABLE = "mlp_cuda"
+BASE_VF32_SIGNIFICAND = 23
+BASE_VF32_EXPONENT_MIN = -148
+BASE_VF32_EXPONENT_MAX = 128
+PROGRAM = "MLP2"
+EXECUTABLE = "mlp2_sim"
+# PROGRAM = "CNN2"
+# EXECUTABLE = "cnn2_sim"
 STAGE_CONFIG = {
     "BUILD": {
         "RUN": True,
@@ -25,7 +29,8 @@ STAGE_CONFIG = {
     },
     "TEST": {
         "RUN": True,
-        "WEIGHTS_FILE": "weights4.csv",
+        # "WEIGHTS_FILE": "mnist-cnn-100.txt",
+        "WEIGHTS_FILE": "weights10000.txt",
         "LOG_FILE": "",
     },
     "CLEANUP": {
@@ -77,6 +82,8 @@ def run_with_sim_setup(command):
         os.path.join(CONFIG_DIR, "gpgpusim.config"))
     # set base precision of VF32 type
     env["VF_SIGNIFICAND"] = str(BASE_VF32_SIGNIFICAND)
+    env["VF_EXPONENT_MIN"] = str(BASE_VF32_EXPONENT_MIN)
+    env["VF_EXPONENT_MAX"] = str(BASE_VF32_EXPONENT_MAX)
     # source sim setup file
     setup_file = os.path.abspath(os.path.join(SIM_DIR, "setup_environment"))
     command = ". {}; {};".format(setup_file, command)
@@ -87,7 +94,6 @@ def build():
     run("make")
 
 
-# TODO: Implement incremental training
 def train():
     config = STAGE_CONFIG["TRAIN"]
     if config["START_EPOCH"] <= 1:
@@ -103,8 +109,14 @@ def train():
 
 
 def test():
-    run_with_sim_setup("./{} -test {}".format(EXECUTABLE,
-                                              STAGE_CONFIG["TEST"]["WEIGHTS_FILE"]))
+    config = STAGE_CONFIG["TEST"]
+    command = "./{} -test {}".format(EXECUTABLE,
+                                     config["WEIGHTS_FILE"])
+    log_file = config["LOG_FILE"]
+    if log_file != "":
+        command = "{} > {}".format(command, log_file)
+    run_with_sim_setup(command)
+
 
 def cleanup():
     run("rm -f _cuobjdump_list_ptx_* _app_cuda_version_*")
