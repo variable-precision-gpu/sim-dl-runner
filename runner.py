@@ -1,3 +1,39 @@
+"""Simulator Deep Learning Runner Script
+
+This script manages the execution of deep learning programs on GPGPU-Sim.
+
+New deep learning programs should be first made compatible with the simulator
+according to the instructions in the README, To use VF32, make sure that the PTX
+for the deep learning program has been generated (by running it on the simulator
+once) and that you have overriden the PTX to use VF32.
+
+Ensure that the repo configuration parameters accurate reflect your local
+project structure. The parameters under script configuration should be set
+accordingly to control execution behavior. Briefly, the four stages in this
+script are as follows:
+
+    BUILD:
+    - Compile DL program
+    - Apply the simulator config file
+    - Setup simulator environment
+    TRAIN:
+    - Executes training on the DL program
+    - Params:
+        - input weights file (optional)
+        - output weights file
+        - start epoch (optional)
+        - end epoch
+    INFER:
+    - Executes inferences on the DL program
+    - Params:
+        - weights file
+        - log file (optional)
+    CLEANUP:
+    - Cleans up temporary files
+
+ Each stage can be individually disabled.
+"""
+
 from collections import OrderedDict
 from time import sleep
 import subprocess
@@ -9,28 +45,25 @@ CONFIG_DIR = "./config"
 SIM_DIR = "./../gpgpu-sim_distribution"
 
 # Script configuration (modify this)
-BASE_VF32_SIGNIFICAND = 23
+BASE_VF32_SIGNIFICAND = 24
 BASE_VF32_EXPONENT_MIN = -148
 BASE_VF32_EXPONENT_MAX = 128
-PROGRAM = "MLP2"
-EXECUTABLE = "mlp2_sim"
-# PROGRAM = "CNN2"
-# EXECUTABLE = "cnn2_sim"
+PROGRAM = "CNN2"
+EXECUTABLE = "cnn2_sim"
 STAGE_CONFIG = {
     "BUILD": {
         "RUN": True,
     },
     "TRAIN": {
         "RUN": False,
-        "START_EPOCH": 250,
-        "INPUT_WEIGHTS_FILE": "weights2.csv",
-        "END_EPOCH": 500,
-        "OUTPUT_WEIGHTS_FILE": "weights3.csv",
+        "START_EPOCH": 1,
+        "INPUT_WEIGHTS_FILE": "",
+        "END_EPOCH": 100,
+        "OUTPUT_WEIGHTS_FILE": "weights100.txt",
     },
     "TEST": {
         "RUN": True,
-        # "WEIGHTS_FILE": "mnist-cnn-100.txt",
-        "WEIGHTS_FILE": "weights10000.txt",
+        "WEIGHTS_FILE": "weights100.txt",
         "LOG_FILE": "",
     },
     "CLEANUP": {
@@ -38,12 +71,11 @@ STAGE_CONFIG = {
     },
 }
 
-# Program constants (do not modify)
-META_COLOR = '\033[92m'
-END_COLOR = '\033[0m'
-
-
 def stream(process):
+    """
+    Streams a given process' stdout to this process' stdout.
+    """
+
     result = None
     while result is None:
         for line in process.stdout:
@@ -56,11 +88,23 @@ def stream(process):
 
 
 def metaprint(stage, message):
+    """
+    Helper function to print "meta" messages about the script execution.
+
+    Messages will be printed in green.
+    """
+
     string = "[{}] {}".format(stage, message)
+    META_COLOR = '\033[92m'
+    END_COLOR = '\033[0m'
     print(META_COLOR + string + END_COLOR)
 
 
 def run(command, env=os.environ):
+    """
+    Runs a given command in a subprocess.
+    """
+
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -76,6 +120,10 @@ def run(command, env=os.environ):
 
 
 def run_with_sim_setup(command):
+    """
+    Runs a given command in a subprocess, with simulator setup.
+    """
+
     env = os.environ.copy()
     # set path to gpgpusim.config
     env["SIM_CONFIG_PATH"] = os.path.abspath(
@@ -91,16 +139,29 @@ def run_with_sim_setup(command):
 
 
 def build():
+    """
+    Invoke the pre-determined build command for DL applications.
+    """
+
     run("make")
 
 
 def train():
+    """
+    Launches training on the simulator for the configured application.
+
+    If a start epoch greater than 1 is provided, a weights input file is expected
+    to perform incremental training.
+    """
+
     config = STAGE_CONFIG["TRAIN"]
     if config["START_EPOCH"] <= 1:
+        # run regular training
         run_with_sim_setup("./{} -train {} {}".format(EXECUTABLE,
                                                       config["END_EPOCH"],
                                                       config["OUTPUT_WEIGHTS_FILE"]))
     else:
+        # run incremental training, starting from an input weights file
         run_with_sim_setup("./{} -train-increment {} {} {} {}".format(EXECUTABLE,
                                                                       config["START_EPOCH"],
                                                                       config["END_EPOCH"],
@@ -109,9 +170,17 @@ def train():
 
 
 def test():
+    """
+    Launches inference on the simulator for the configured application.
+
+    If a non-empty log file name is provided, the simulator output is piped
+    to the log file.
+    """
+
     config = STAGE_CONFIG["TEST"]
     command = "./{} -test {}".format(EXECUTABLE,
                                      config["WEIGHTS_FILE"])
+    # pipe simulator output to log file (if any)
     log_file = config["LOG_FILE"]
     if log_file != "":
         command = "{} > {}".format(command, log_file)
@@ -119,6 +188,10 @@ def test():
 
 
 def cleanup():
+    """
+    Deletes temporary files created by simulator.
+    """
+
     run("rm -f _cuobjdump_list_ptx_* _app_cuda_version_*")
 
 
