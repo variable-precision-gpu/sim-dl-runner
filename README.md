@@ -1,47 +1,32 @@
-# GPGPU-Sim DL Runner
+# GPGPU-Sim Deep Learning Runner
 
-This program manages the execution of deep learning programs on GPGPU-Sim.
+This project helps manage the execution of deep learning programs on GPGPU-Sim.
 
-## Requirements
-- [x] Compile programs
-- [x] Apply a global sim config file to all programs
-- [x] Setup sim environment
-- [x] Train  
-Params: weights, epochs, start epoch, end epoch
-- [x] Infer  
-Params: weights, logs (not implemented yet)
-- [x] Clean up intermediate files (_app_cuda_version, _cuobjdump_list_ptx)
+## Prerequisites
+Python 3.7, CUDA 8, GPGPU-Sim 4.0, MPFR 3.1
 
-## Usage
-### Making DL Program Compatible
-#### 1. Program needs to be compilable with `make`
-#### 2. Program needs to accept the following modes:
-Train
+## Execution
+```console
+$ python3 runner.py
+```
+Modify the `runner.py` file to set execution parameters.
+
+## Adding DL Applications
+New programs should be made compatible:
+1. Make program compilable with `make`
+2. Write the program to run in the following modes:
+
+**Train**
 ```console
 PROGRAM -train EPOCHS WEIGHTS_FILE
 ```
-Train (Increment)
+**Train (Increment)**
 ```console
 PROGRAM -train-increment START_EPOCH END_EPOCH INPUT_WEIGHTS_FILE OUTPUT_WEIGHTS_FILE
 ```
-Test
+**Test**
 ```console
 PROGRAM -test WEIGHTS_FILE
 ```
 
-### Configuring Script
-#### Repository Configuration
-- Program directory
-- Sim config directory
-- Sim directory
-
-#### Script Configuration
-- Initial VF32 significand width
-- Program name (directory name)
-- Executable name
-- Stage configuration (TODO: add more details)
-
-### Executing Script
-```console
-$ python3 runner.py
-```
+3. Generate and override PTX
