@@ -1,4 +1,4 @@
-"""Simulator Deep Learning Runner Script
+"""GPGPU-Sim Deep Learning Runner Script
 
 This script manages the execution of deep learning programs on GPGPU-Sim.
 
@@ -45,11 +45,11 @@ CONFIG_DIR = "./config"
 SIM_DIR = "./../gpgpu-sim_distribution"
 
 # Script configuration (modify this)
-BASE_VF32_SIGNIFICAND = 24
-BASE_VF32_EXPONENT_MIN = -148
-BASE_VF32_EXPONENT_MAX = 128
-PROGRAM = "CNN2"
-EXECUTABLE = "cnn2_sim"
+BASE_VF_SIGNIFICAND = 8
+BASE_VF_EXPONENT_MIN = -132
+BASE_VF_EXPONENT_MAX = 128
+PROGRAM = "MLP2"
+EXECUTABLE = "mlp2_sim"
 STAGE_CONFIG = {
     "BUILD": {
         "RUN": True,
@@ -58,12 +58,12 @@ STAGE_CONFIG = {
         "RUN": False,
         "START_EPOCH": 1,
         "INPUT_WEIGHTS_FILE": "",
-        "END_EPOCH": 100,
-        "OUTPUT_WEIGHTS_FILE": "weights100.txt",
+        "END_EPOCH": 10000,
+        "OUTPUT_WEIGHTS_FILE": "weights10000.txt",
     },
     "TEST": {
         "RUN": True,
-        "WEIGHTS_FILE": "weights100.txt",
+        "WEIGHTS_FILE": "weights10000.txt",
         "LOG_FILE": "",
     },
     "CLEANUP": {
@@ -129,9 +129,9 @@ def run_with_sim_setup(command):
     env["SIM_CONFIG_PATH"] = os.path.abspath(
         os.path.join(CONFIG_DIR, "gpgpusim.config"))
     # set base precision of VF32 type
-    env["VF_SIGNIFICAND"] = str(BASE_VF32_SIGNIFICAND)
-    env["VF_EXPONENT_MIN"] = str(BASE_VF32_EXPONENT_MIN)
-    env["VF_EXPONENT_MAX"] = str(BASE_VF32_EXPONENT_MAX)
+    env["VF_SIGNIFICAND"] = str(BASE_VF_SIGNIFICAND)
+    env["VF_EXPONENT_MIN"] = str(BASE_VF_EXPONENT_MIN)
+    env["VF_EXPONENT_MAX"] = str(BASE_VF_EXPONENT_MAX)
     # source sim setup file
     setup_file = os.path.abspath(os.path.join(SIM_DIR, "setup_environment"))
     command = ". {}; {};".format(setup_file, command)
