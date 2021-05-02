@@ -28,12 +28,12 @@ This project serves to organize the files required for running mixed-precision d
 
 ## Usage
 
-### 1. Configuring the Simulator
+### 1. Configuring the simulator
 Place the configuration files of the GPU being simulated in the `configs/` folder, instead of directly in the deep learning program's directory.
 
 The mixed precision experiments conducted so far were performed with the TITAN V configuration that's already in the folder, but feel free to experiment with other configurations. Note that some runtime issues were encountered previously with the TITAN X config.
 
-### 2. Adding new Deep Learning Programs
+### 2. Adding new deep learning programs
 Add a new deep learning application into the programs subdirectory as a git submodule
 
 ```console
@@ -79,7 +79,7 @@ Each of the programs in the [`variable-precision-gpu` GitHub organization](https
 
 3\. Generate and override PTX accordingly, if using mixed precision
 
-### 3. Runner Execution
+### 3. Runner execution
 Before executing the runner script `runner.py`, configure the execution parameters first. A brief description of what the script does is provided at the top of the file for reference. Specify the target program, the name of the executable and the stages to run.
 
 You can then run the script with:
